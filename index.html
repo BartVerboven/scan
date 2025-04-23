@@ -5,24 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EAN Scanner</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
-    input, button { padding: 0.5rem; margin: 0.25rem 0; font-size: 1rem; }
-    #scanner-container { width: 100%; height: 300px; background: #f0f0f0; margin-bottom: 1rem; display: none; position: relative; }
+    body { font-family: sans-serif; padding: 1rem; margin: auto; background: #fafafa; }
+    input, button { padding: 0.75rem; margin: 0.5rem 0; font-size: 1.1rem; width: 100%; box-sizing: border-box; }
+    button { background: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #scanner-container { width: 100%; height: 300px; background: #f0f0f0; margin-bottom: 1rem; display: none; position: relative; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: cover; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid #ccc; padding: 0.75rem; text-align: center; font-size: 1rem; }
+    th { background: #f8f8f8; }
+    .action-btn { background: #dc3545; color: white; border: none; padding: 0.5rem; font-size: 0.9rem; border-radius: 4px; cursor: pointer; }
+    .action-btn:hover { background: #b52a3b; }
   </style>
 </head>
 <body>
-  <h1>EAN Scanner Tool</h1>
+  <h1>📦 EAN Scanner Tool</h1>
   <button onclick="startScanner()">📷 Scan EAN</button>
   <div id="scanner-container"><video id="video"></video></div>
   <input type="text" id="ean-input" placeholder="EAN (or scan)" readonly />
   <input type="number" id="quantity-input" placeholder="Quantity" min="1" />
-  <button onclick="addEntry()">Add to Shipment</button>
-  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="addEntry()">➕ Add to Shipment</button>
+  <button onclick="exportCSV()">📄 Export CSV</button>
+
   <table id="summary-table">
-    <thead><tr><th>EAN</th><th>Total Quantity</th></tr></thead>
+    <thead><tr><th>EAN</th><th>Total Quantity</th><th>Actions</th></tr></thead>
     <tbody></tbody>
   </table>
 
@@ -71,10 +77,31 @@
       quantityInput.value = '';
     }
 
+    function editEntry(ean) {
+      eanInput.value = ean;
+      quantityInput.value = data[ean];
+      delete data[ean];
+      updateTable();
+    }
+
+    function deleteEntry(ean) {
+      if (confirm(`Remove EAN ${ean} from the list?`)) {
+        delete data[ean];
+        updateTable();
+      }
+    }
+
     function updateTable() {
       summaryTableBody.innerHTML = '';
       Object.entries(data).forEach(([ean, qty]) => {
-        const row = `<tr><td>${ean}</td><td>${qty}</td></tr>`;
+        const row = `<tr>
+          <td>${ean}</td>
+          <td>${qty}</td>
+          <td>
+            <button class="action-btn" onclick="editEntry('${ean}')">✏️ Edit</button>
+            <button class="action-btn" onclick="deleteEntry('${ean}')">🗑️ Delete</button>
+          </td>
+        </tr>`;
         summaryTableBody.innerHTML += row;
       });
     }
