@@ -18,6 +18,8 @@
     .action-btn:hover { opacity: 0.9; }
     .delete-btn { background: #dc3545; }
     .delete-btn:hover { background: #b52a3b; }
+    .clear-btn { background: #ffc107; color: black; }
+    .clear-btn:hover { background: #e0a800; }
   </style>
 </head>
 <body>
@@ -28,6 +30,7 @@
   <input type="number" id="quantity-input" placeholder="Quantity" min="1" />
   <button onclick="addEntry()">➕ Add to Shipment</button>
   <button onclick="exportCSV()">📄 Export CSV</button>
+  <button onclick="clearShipment()" class="clear-btn">🧹 New Shipment</button>
 
   <table id="summary-table">
     <thead><tr><th>EAN</th><th>Total Quantity</th><th>Actions</th></tr></thead>
@@ -42,11 +45,31 @@
     const summaryTableBody = document.querySelector('#summary-table tbody');
     const scannerContainer = document.getElementById('scanner-container');
     const videoElement = document.getElementById('video');
-    const data = {};
+    let data = {};
 
     let streamStarted = false;
     let isEditing = false;
     let editEAN = '';
+
+    function loadFromStorage() {
+      const stored = localStorage.getItem('shipmentData');
+      if (stored) {
+        data = JSON.parse(stored);
+        updateTable();
+      }
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('shipmentData', JSON.stringify(data));
+    }
+
+    function clearShipment() {
+      if (confirm("Start a new shipment? This will clear current data.")) {
+        data = {};
+        updateTable();
+        saveToStorage();
+      }
+    }
 
     function startScanner() {
       scannerContainer.style.display = 'block';
@@ -74,6 +97,7 @@
       if (!ean || isNaN(qty) || qty <= 0) return;
 
       if (isEditing) {
+        delete data[editEAN];
         data[ean] = qty;
         isEditing = false;
         editEAN = '';
@@ -83,6 +107,7 @@
       }
 
       updateTable();
+      saveToStorage();
       eanInput.value = '';
       quantityInput.value = '';
     }
@@ -98,6 +123,7 @@
       if (confirm(`Remove EAN ${ean} from the list?`)) {
         delete data[ean];
         updateTable();
+        saveToStorage();
       }
     }
 
@@ -130,6 +156,8 @@
       link.click();
       document.body.removeChild(link);
     }
+
+    loadFromStorage();
   </script>
 </body>
 </html>
