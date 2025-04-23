@@ -14,8 +14,10 @@
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 8px; overflow: hidden; }
     th, td { border: 1px solid #ccc; padding: 0.75rem; text-align: center; font-size: 1rem; }
     th { background: #f8f8f8; }
-    .action-btn { background: #dc3545; color: white; border: none; padding: 0.5rem; font-size: 0.9rem; border-radius: 4px; cursor: pointer; }
-    .action-btn:hover { background: #b52a3b; }
+    .action-btn { background: #6c757d; color: white; border: none; padding: 0.5rem; font-size: 0.9rem; border-radius: 4px; cursor: pointer; margin: 0 2px; }
+    .action-btn:hover { opacity: 0.9; }
+    .delete-btn { background: #dc3545; }
+    .delete-btn:hover { background: #b52a3b; }
   </style>
 </head>
 <body>
@@ -43,6 +45,8 @@
     const data = {};
 
     let streamStarted = false;
+    let isEditing = false;
+    let editEAN = '';
 
     function startScanner() {
       scannerContainer.style.display = 'block';
@@ -69,10 +73,16 @@
       const qty = parseInt(quantityInput.value);
       if (!ean || isNaN(qty) || qty <= 0) return;
 
-      if (!data[ean]) data[ean] = 0;
-      data[ean] += qty;
-      updateTable();
+      if (isEditing) {
+        data[ean] = qty;
+        isEditing = false;
+        editEAN = '';
+      } else {
+        if (!data[ean]) data[ean] = 0;
+        data[ean] += qty;
+      }
 
+      updateTable();
       eanInput.value = '';
       quantityInput.value = '';
     }
@@ -80,8 +90,8 @@
     function editEntry(ean) {
       eanInput.value = ean;
       quantityInput.value = data[ean];
-      delete data[ean];
-      updateTable();
+      isEditing = true;
+      editEAN = ean;
     }
 
     function deleteEntry(ean) {
@@ -99,7 +109,7 @@
           <td>${qty}</td>
           <td>
             <button class="action-btn" onclick="editEntry('${ean}')">✏️ Edit</button>
-            <button class="action-btn" onclick="deleteEntry('${ean}')">🗑️ Delete</button>
+            <button class="action-btn delete-btn" onclick="deleteEntry('${ean}')">🗑️ Delete</button>
           </td>
         </tr>`;
         summaryTableBody.innerHTML += row;
