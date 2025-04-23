@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EAN Scanner</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
+    input, button { padding: 0.5rem; margin: 0.25rem 0; font-size: 1rem; }
+    #scanner-container { width: 100%; max-height: 400px; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>EAN Scanner Tool</h1>
+  <div id="scanner-container"></div>
+  <input type="text" id="ean-input" placeholder="EAN (or scan)" readonly />
+  <input type="number" id="quantity-input" placeholder="Quantity" min="1" />
+  <button onclick="addEntry()">Add to Shipment</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <table id="summary-table">
+    <thead><tr><th>EAN</th><th>Total Quantity</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const eanInput = document.getElementById('ean-input');
+    const quantityInput = document.getElementById('quantity-input');
+    const summaryTableBody = document.querySelector('#summary-table tbody');
+    const data = {};
+
+    // Start camera scanning
+    codeReader.decodeFromVideoDevice(null, 'scanner-container', (result, err) => {
+      if (result) {
+        eanInput.value = result.text;
+      }
+    });
+
+    function addEntry() {
+      const ean = eanInput.value.trim();
+      const qty = parseInt(quantityInput.value);
+      if (!ean || isNaN(qty) || qty <= 0) return;
+
+      if (!data[ean]) data[ean] = 0;
+      data[ean] += qty;
+      updateTable();
+
+      eanInput.value = '';
+      quantityInput.value = '';
+    }
+
+    function updateTable() {
+      summaryTableBody.innerHTML = '';
+      Object.entries(data).forEach(([ean, qty]) => {
+        const row = `<tr><td>${ean}</td><td>${qty}</td></tr>`;
+        summaryTableBody.innerHTML += row;
+      });
+    }
+
+    function exportCSV() {
+      const rows = [['EAN', 'Quantity']];
+      for (let [ean, qty] of Object.entries(data)) {
+        rows.push([ean, qty]);
+      }
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "shipment.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
